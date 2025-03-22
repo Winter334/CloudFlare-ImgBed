@@ -503,15 +503,24 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
         metadata.FileSize = (fileInfo.file_size / 1024 / 1024).toFixed(2);
 
         // 若上传成功，将响应返回给客户端
-        if (response.ok) {
-            res = new Response(
-                JSON.stringify([{ 'src': `${returnLink}` }]),
-                {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://lyrashore.com' }
-                }
-            );
-        }
+	if (response.ok) {
+	  // 动态生成 headers（无需外部依赖）
+	  const corsOrigin = request.headers.get('Origin') || '';
+	  const allowed = /^https?:\/\/(.*\.)?lyrashore\.com$/.test(corsOrigin);
+	
+	  // 使用 const 声明（推荐，确保块级作用域隔离）
+	  const corsHeaders = {
+	    'Content-Type': 'application/json',
+	    'Access-Control-Allow-Origin': allowed ? corsOrigin : 'https://lyrashore.com',
+	    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	    'Access-Control-Allow-Headers': 'Content-Type'
+	  };
+	
+	  return new Response(JSON.stringify([{ src: `${returnLink}` }]), {
+	    status: 200,
+	    headers: corsHeaders
+	  });
+	}
 
 
         // 图像审查
